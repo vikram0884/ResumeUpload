@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head><title>{{title}}</title></head>
+<body>
+<h1>Hello {{user}}</h1>
+<br>
+<a href="../logout">Logout</a>
+<br>
+<br>
+{% if rows %}
+    <table border=5>
+        <tr>
+            {% for header in cols %}
+                <td>{{header}}</td>
+            {% endfor %}
+        </tr>
+        {% for row in rows %}
+            <tr>
+                <td> {{row.TIMESTAMP_AS_ID}}</td>
+                <td> {{row.EMAIL}}</td>
+                <td> {{row.PHONE}}</td>
+                <td> {{row.FILENAME}}</td>
+                <td> {{row.STATUS}}</td>
+                <td> <a href="../view?id={{row.id}}">View</a></td>
+                <td> <a href="../approve?id={{row.id}}">Approve</a></td>
+                <td> <a href="../reject?id={{row.id}}">Reject</a></td>
+            </tr> 
+        {% endfor %}
+{% else %}
+    <h2>No Uploads to view/approve/reject</h2>
+{% endif %}
+</table>
+</body>
+</html>
