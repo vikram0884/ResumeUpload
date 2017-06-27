@@ -17,7 +17,7 @@ class Credentials(object):
     """
     Needed to establish database connection
     """
-    def __init__(self, host=None, user=None, password=None, database=None):
+    def __init__(self, host=None, user=None, password=None, database=None, confirm_password=False):
         """
         Sets the credentials which will be used for database connection
         """
@@ -25,8 +25,15 @@ class Credentials(object):
         self.host = host if host else "localhost"
         self.user = raw_input("Enter the USER name:") if not user else user
         self.password = getpass("Password:")
+        while confirm_password:
+            pass2 = getpass("Password(Enter Again):")
+            if pass2 == self.password:
+                break
+            else:
+                print "Password mismatch..."
+                self.password = getpass("Password:")
         self.database = raw_input("Enter dbname:") if not database else database
-        print "\nCredentials collected for" + self.user + " ...\n"
+        print "\nCredentials collected for " + self.user + " ...\n"
 
     def get_credentials(self):
         """
@@ -165,7 +172,7 @@ class Tasks(object):
     SETUP = {
             0 : ('Dependency checks', DependencyFix, []),
             1 : ('Root DB credentials'           , Credentials, []), 
-            2 : ('DB User to create'             , Credentials, []),
+            2 : ('DB User to create'             , Credentials, ['', '', '', '',True]),
             3 : ('DB Connection creation'        , DBConnector, [1,]),
             4 : ('db creation for the app'       , CreateDatabase, [3, 2]),
             5 : ('DB User creation & permissions', SetDBUser, [3, 2]),
@@ -191,8 +198,7 @@ class Tasks(object):
         tasks = Tasks.TASKS[mode]
         for no in tasks:
             desc, cls, args = tasks.get(no, (None, None, None) )
-            topic = "Task %s"%desc
-            topic = "\n"+ topic + "\n" + len(topic)*'-' + "\n"
+            topic = "\n"+ desc + "\n" + len(desc)*'-' + "\n"
             print topic
             index[no] = cls
             if not args:
