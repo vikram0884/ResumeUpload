@@ -20,7 +20,7 @@ Set Env & Deploy:
 
     1. To run for first time, we need to setup the environment and use the below command
 
-       usrname@My-PC:~/ResumeUpload$ python set_env.py setup_env
+       usrname@My-PC:~/ResumeUpload$ python run.py setup_env
 
            This will accomplish the following:
                1. Dependency checks
@@ -34,7 +34,7 @@ Set Env & Deploy:
 
     2. To run for the first time and to start the site, use the below command
 
-       usrname@My-PC:~/ResumeUpload$ python set_env.py all
+       usrname@My-PC:~/ResumeUpload$ python run.py all
 
            This will accomplish the following:
                1. Dependency checks
@@ -49,7 +49,7 @@ Set Env & Deploy:
 
     3. To start the site, use the below command
 
-       usrname@My-PC:~/ResumeUpload$ python set_env.py start_app
+       usrname@My-PC:~/ResumeUpload$ python run.py start_app
 
            Starting the site ... 
 
