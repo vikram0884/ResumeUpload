@@ -1,5 +1,17 @@
 from getpass import getpass
-import MySQLdb, os
+import MySQLdb, os, sys
+
+class DependencyFix(object):
+    """
+    Checks for dependency checks and fixes
+    """
+    def __init__(self):
+        """
+        Uses requirements.txt to check and fix
+        """
+        print "\nDependency checks ...\n"
+        os.system("pip install -r requirements.txt")
+        print "\nDependencies checked ...\n"
 
 class Credentials(object):
     """
@@ -12,15 +24,9 @@ class Credentials(object):
         self.host = raw_input("Enter the DB server(Press Enter if its localhost):") if not host else host
         self.host = host if host else "localhost"
         self.user = raw_input("Enter the USER name:") if not user else user
-        pass1, pass2 = range(2)
-        while pass1 != pass2:
-            pass1 = getpass("Password:")
-            pass2 = getpass("Password(Enter Again):")
-            if pass1 != pass2:
-                print "Password don't match.. enter again"
-            else:
-                self.password = pass1
+        self.password = getpass("Password:")
         self.database = raw_input("Enter dbname:") if not database else database
+        print "\nCredentials collected for" + self.user + " ...\n"
 
     def get_credentials(self):
         """
@@ -47,6 +53,7 @@ class DBConnector(object):
             credentials = Credentials()
         self.dbcon  = MySQLdb.connect(*credentials.get_credentials())
         self.set_cursor()
+        print "\nDB handle created ...\n"
 
     def execute(self, query):
         """
@@ -80,6 +87,7 @@ class CreateDatabase(object):
         query = "CREATE DATABASE %(dbname)s"%locals()
         dbcon.execute(query)
         dbcon.commit()
+        print "\nCreated database "+dbname+ " ...\n"
 
 class SetDBUser(object):
     """
@@ -102,6 +110,7 @@ class SetDBUser(object):
         dbcon.execute(gquery)
         dbcon.execute("FLUSH PRIVILEGES")
         dbcon.commit()
+        print "\nUser(%s) is created and permissions are granted ..."%user
 
 class SetDBConfigFile(object):
     """
@@ -119,8 +128,23 @@ class SetDBConfigFile(object):
         self.file.flush()
         self.file.close()
         os.system("chmod 644 "+filename)
+        print "\nUseable DB Config file created ...\n"
 
-class DJangoTasks(object):
+class CreateAdminUser(object):
+    """
+    Creates admin user for the site
+    """
+    def __init__(self):
+        """
+        Creates admin user
+        """
+        os.system("python manage.py makemigrations")
+        os.system("python manage.py migrate")
+        print "\nCreating ADMIN user ...\n"
+        os.system("python manage.py createsuperuser")
+        print "\nAdmin user created ...\n"
+
+class Start(object):
     """
     Used for making db preparation and for starting dev server
     """
@@ -128,7 +152,7 @@ class DJangoTasks(object):
         """
         Runs the django prep for the app
         """
-        os.system("python manage.py createsuperuser")
+        print "\nStarting the site ... \n"
         os.system("python manage.py makemigrations")
         os.system("python manage.py migrate")
         os.system("python manage.py runserver")
@@ -138,26 +162,38 @@ class Tasks(object):
     Sets the environment for the app to start successfully
     """
     #need to add a class to check and install dependencies based on requirements.txt
-    tasks = { 
-                # Can change 1 in the tuple to 0 if the task is not needed, still its not meaningful to task 1 as its needed to connect to DB
-                1 : (1, 'Root DB credentials', Credentials, []), 
-                2 : (1, 'DB User to create  ', Credentials, []),
-                3 : (1, 'DB Connection creation', DBConnector, [1,]),
-                4 : (1, 'db creation for the app', CreateDatabase, [3, 2]),
-                5 : (1, 'DB User creation & permissions', SetDBUser, [3, 2]),
-                6 : (1, 'DB Config file creation       ', SetDBConfigFile, ['conn.cnf', 2]),
-                7 : (1, 'DJango task', DJangoTasks, []),
-            }
-    def __init__(self):
+    SETUP = {
+            0 : ('Dependency checks', DependencyFix, []),
+            1 : ('Root DB credentials'           , Credentials, []), 
+            2 : ('DB User to create'             , Credentials, []),
+            3 : ('DB Connection creation'        , DBConnector, [1,]),
+            4 : ('db creation for the app'       , CreateDatabase, [3, 2]),
+            5 : ('DB User creation & permissions', SetDBUser, [3, 2]),
+            6 : ('DB Config file creation'       , SetDBConfigFile, ['conn.cnf', 2]),
+            7 : ('Create admin user'             , CreateAdminUser, [])
+        }
+
+    START = {
+            8 : ('Migrate changes and start the site', Start, []),
+        }
+
+    ALL = {}
+    ALL.update(SETUP)
+    ALL.update(START)
+
+    TASKS = { 'all': ALL, 'setup_env': SETUP, 'start_app': START,}
+
+    def __init__(self, mode='all'):
         """
-        Initiates the process for setting the environement
+        Initiates the process of setting env or/and starting the site.
         """
         index, obj = {}, {}
-        for no in Tasks.tasks:
-            todo, desc, cls, args = Tasks.tasks.get(no, (None, None, None, None) )
-            if not todo:
-                continue
-            print "Task %s : %s"%(no, desc,)
+        tasks = Tasks.TASKS[mode]
+        for no in tasks:
+            desc, cls, args = tasks.get(no, (None, None, None) )
+            topic = "Task %s"%desc
+            topic = "\n"+ topic + "\n" + len(topic)*'-' + "\n"
+            print topic
             index[no] = cls
             if not args:
                 obj[no] = index[no]()
@@ -171,7 +207,10 @@ class Tasks(object):
                 arguments = arguments[:-1]
                 obj[no] = index[no](*eval(arguments)) if arguments.count(",") > 0 else index[no](eval(arguments))
 if __name__ == '__main__':
-    task = Tasks()
+    if len(sys.argv)>1:
+        task = Tasks(sys.argv[1])
+    else:
+        task = Tasks()
 
 
 
